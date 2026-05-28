@@ -1,5 +1,4 @@
-import abc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from src.piece import Piece
 
@@ -16,20 +15,8 @@ class Pawn(Piece):
     def direction(self) -> int:
         return 1 if self.color == "white" else -1
 
-    def get_coordinates(self) -> tuple:
-        return self._coordinates
-
-    def set_coordinates(self, coordinates: tuple) -> None:
-        self._coordinates = coordinates
-
-    def can_move(self, board: "Board", new_coordinates: tuple) -> bool:
+    def _can_move(self, board: "Board", new_coordinates: tuple) -> bool:
         coordinates = self.get_coordinates()
-
-        if coordinates == new_coordinates:
-            return False
-
-        if new_coordinates not in board.matrix:
-            return False
 
         if new_coordinates[1] != coordinates[1] and new_coordinates[0] == coordinates[0]:
             return False
@@ -60,3 +47,18 @@ class Pawn(Piece):
             return True
 
         return False
+    
+    @override
+    def can_attack(self, board: "Board", new_coordinates: tuple) -> bool:
+        coordinates = self.get_coordinates()
+
+        dx = new_coordinates[0] - coordinates[0]
+        dy = new_coordinates[1] - coordinates[1]
+
+        if dx != self.direction:
+            return False
+
+        if abs(dy) != 1:
+            return False
+
+        return True
