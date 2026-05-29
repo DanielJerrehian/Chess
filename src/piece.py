@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 class Piece(abc.ABC):
     def __init__(self, starting_coordinates: tuple, color: str) -> None:
-        self._coordinates = (starting_coordinates)
+        self._coordinates = starting_coordinates
         self.color = color
         self.move_number = 0
 

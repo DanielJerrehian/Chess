@@ -15,6 +15,14 @@ class King(Piece):
         
         dx = new_coordinates[0] - coordinates[0]
         dy = new_coordinates[1] - coordinates[1]
+
+        if abs(dy) == 2:
+            if new_coordinates[1] == 7:
+                if board.can_castle_kingside(color=self.color):
+                    return True
+            elif new_coordinates[1] == 3:
+                if board.can_castle_queenside(color=self.color):
+                    return True
         
         if abs(dx) > 1 or abs(dy) > 1:
             return False
