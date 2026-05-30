@@ -21,7 +21,8 @@ class Board:
     def __init__(self) -> None:
         self.matrix: tuple = self._create_matrix()
         self.pieces: dict = {}
-        self.turn = "white"
+        self.turn: str = "white"
+        self.last_move_state: MoveState = None
 
     def _create_matrix(self) -> tuple:
         matrix = []
@@ -112,6 +113,8 @@ class Board:
         if self.verify_king_in_check(self.turn):
             print(f"Color {self.turn} is in check!")
 
+        self.last_move_state = move_state
+
         return True
 
     def _undo_move(self, move_state: MoveState) -> None:
@@ -147,8 +150,13 @@ class Board:
         move_state.piece.move_number += 1
 
     def _create_move_state(self, piece: "Piece", new_coordinates: tuple) -> MoveState:
+        
         captured_piece = self.get_piece_at_coordinates(new_coordinates)
         captured_coordinates = captured_piece.get_coordinates() if captured_piece else None
+
+        if isinstance(piece, Pawn) and self.can_en_passant(piece, new_coordinates):
+            captured_piece = self.last_move_state.piece
+            captured_coordinates = self.last_move_state.new_coordinates
 
         return MoveState(
             piece=piece,
@@ -266,6 +274,8 @@ class Board:
         king_move_number = king.move_number if king else None
 
         rook = self.get_piece_at_coordinates(coordinates=rook_coordinates)
+        if not rook:
+            return False
         rook_move_number = rook.move_number if rook else None
         
         if king_move_number == None:
@@ -298,8 +308,10 @@ class Board:
         king_coordinate_x = castle_coordinates["king_coordinates"][0]
 
         rook = self.get_piece_at_coordinates(coordinates=castle_coordinates["rook_coordinates"])
+        if not rook:
+            return False
         rook_coordinate_x = castle_coordinates["rook_coordinates"][0]
-        
+
         rook_target = None
         king_target = None
 
@@ -308,7 +320,7 @@ class Board:
                 return False
             rook_target = (rook_coordinate_x, 6)
             king_target = (king_coordinate_x, 7)
-        
+
         elif side == "queen":
             if not self.can_castle_queenside(color=color):
                 return False
@@ -324,7 +336,39 @@ class Board:
         self._apply_move(king_move_state)
         self._apply_move(rook_move_state)
 
+        self.last_move_state = None
+
         self.turn = "black" if self.turn == "white" else "white"
 
         return True
+    
+    def can_en_passant(self, pawn: "Piece", new_coordinates: tuple) -> bool:
+        if not self.last_move_state:
+            return False
+        
+        last_piece = self.last_move_state.piece
 
+        if not isinstance(last_piece, Pawn):
+            return False
+
+        if last_piece.color == pawn.color:
+            return False
+
+        if abs(self.last_move_state.old_coordinates[0] - self.last_move_state.new_coordinates[0]) != 2:
+            return False
+
+        pawn_coordinates = pawn.get_coordinates()
+        last_pawn_coordinates = self.last_move_state.new_coordinates
+
+        if last_pawn_coordinates[0] != pawn_coordinates[0]:
+            return False
+
+        if abs(last_pawn_coordinates[1] - pawn_coordinates[1]) != 1:
+            return False
+
+        expected_target = (pawn_coordinates[0] + pawn.direction, last_pawn_coordinates[1])
+
+        if new_coordinates != expected_target:
+            return False
+
+        return True

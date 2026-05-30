@@ -43,6 +43,9 @@ class Pawn(Piece):
             if new_coordinates[1] != coordinates[1]:
                 return True
 
+        if not piece_at_new_coordinates and new_coordinates[1] != coordinates[1]:
+            return board.can_en_passant(self, new_coordinates)
+
         if not piece_at_new_coordinates and coordinates[1] == new_coordinates[1]:
             return True
 

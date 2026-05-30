@@ -1,18 +1,16 @@
+import tkinter as tk
+
 from src.board import Board
 from src.utils.bootstrap import pieces
+from src.ui import Ui, root
 
 
 board = Board()
 # print(board._format_matrix(board.matrix))
+board.pieces = pieces
 
-
-# bishop = Bishop(starting_coordinates=(1,1), color="black")
-# bishop.can_move(board=board, new_coordinates=(2,2))
-# print(is_straight)
-
-# board.pieces = pieces
-# print(board._verify_king_and_rook_move_numbers_equal_zero("black", "queen"))
-
-for number in range(6, 8):
-    print(number)
-
+root.columnconfigure(0, weight=1)
+root.rowconfigure(0, weight=1)
+ui = Ui(root, board, width=900, height=900)
+ui.grid()
+root.mainloop()

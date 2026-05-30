@@ -38,5 +38,5 @@ pieces = {
     (8,5): King((8, 5), "black"),
     (8,6): Bishop((8, 6), "black"),
     (8,7): Knight((8, 7), "black"),
-    (8,8): Rook((8, 8), "black"),
+    (8,8): Rook((8, 8), "black")
 }

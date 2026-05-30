@@ -10,3 +10,4 @@ class MoveState:
     new_coordinates: tuple
     captured_piece: Piece | None
     captured_coordinates: tuple | None
+    en_passant_captured_piece: Piece | None = None
