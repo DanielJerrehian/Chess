@@ -110,8 +110,7 @@ class Board:
 
         self.turn = "black" if self.turn == "white" else "white"
 
-        if self.verify_king_in_check(self.turn):
-            print(f"Color {self.turn} is in check!")
+        self.verify_king_in_check(self.turn)
 
         self.last_move_state = move_state
     
@@ -172,7 +171,6 @@ class Board:
                 continue
             moves = piece.get_legal_moves(self)
             if moves:
-                print(type(piece).__name__, piece.get_coordinates(), moves)
                 return True
         return False
     
@@ -266,44 +264,35 @@ class Board:
 
         return {"king_coordinates": king_coordinates, "rook_coordinates": rook_coordinates}
 
-    def _verify_king_and_rook_move_numbers_equal_zero(self, king_coordinates: tuple, rook_coordinates: tuple, color: str) -> bool:
+    def _verify_king_and_rook_move_numbers_equal_zero(
+    self,
+    king_coordinates: tuple,
+    rook_coordinates: tuple,
+    color: str
+) -> bool:
         if not king_coordinates:
             raise ValueError("King coordinates are None")
 
-        if not rook_coordinates: 
+        if not rook_coordinates:
             raise ValueError("Rook coordinates are None")
-        
+
         king = self.get_piece_at_coordinates(coordinates=king_coordinates)
-        king_move_number = king.move_number if king else None
+        if not king:
+            return False
 
         rook = self.get_piece_at_coordinates(coordinates=rook_coordinates)
         if not rook:
             return False
-        rook_move_number = rook.move_number if rook else None
-        
-        if king_move_number == None:
-            raise ValueError(f"No king found for color {color}")
 
-        if rook_move_number == None:
-            raise ValueError(f"No rook found for color {color}")
-        
-        if king_move_number != 0 or rook_move_number != 0:
+        if king.move_number != 0:
             return False
-        
+
+        if rook.move_number != 0:
+            return False
+
         return True
 
-    def _verify_squares_between_king_and_rook_are_empty(self, king_coordinates: tuple, rook_coordinates: tuple, side: str) -> bool:
-        coordinate_x = king_coordinates[0]
-        
-        lower_bound = king_coordinates[1] + 1 if side == "king" else rook_coordinates[1] + 1
-        upper_bound = rook_coordinates[1] if side == "king" else king_coordinates[1]
-        
-        for coordinate_y in range(lower_bound, upper_bound):
-            if self.get_piece_at_coordinates((coordinate_x, coordinate_y)):
-                return False
-            
-        return True
-
+    
     def castle(self, color: str, side: str) -> bool:
         castle_coordinates = self._get_king_and_rook_coordinates_for_castling(color=color, side=side)
 

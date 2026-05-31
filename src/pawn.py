@@ -40,10 +40,12 @@ class Pawn(Piece):
             if piece_at_new_coordinates.color == self.color:
                 return False
 
-            if new_coordinates[1] != coordinates[1]:
+            if abs(new_coordinates[1] - coordinates[1]) == 1:
                 return True
 
         if not piece_at_new_coordinates and new_coordinates[1] != coordinates[1]:
+            if abs(new_coordinates[1] - coordinates[1]) != 1:
+                return False
             return board.can_en_passant(self, new_coordinates)
 
         if not piece_at_new_coordinates and coordinates[1] == new_coordinates[1]:

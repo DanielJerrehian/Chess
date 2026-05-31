@@ -41,7 +41,6 @@ class Piece(abc.ABC):
 
             if board.would_move_be_legal(self, coordinate):
                 legal_moves.append(coordinate)
-
         return legal_moves
 
     @abc.abstractmethod
