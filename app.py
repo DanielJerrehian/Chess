@@ -6,8 +6,8 @@ from src.ui import Ui, root
 
 
 board = Board()
-# print(board._format_matrix(board.matrix))
 board.pieces = pieces
+distance_per_move = 10
 
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)

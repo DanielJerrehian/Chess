@@ -114,7 +114,7 @@ class Board:
             print(f"Color {self.turn} is in check!")
 
         self.last_move_state = move_state
-
+    
         return True
 
     def _undo_move(self, move_state: MoveState) -> None:
@@ -167,10 +167,12 @@ class Board:
         )
     
     def check_player_has_any_legal_moves(self, color: str) -> bool:
-        for piece in self.pieces.values():
+        for piece in list(self.pieces.values()):
             if piece.color != color:
                 continue
-            if len(piece.get_legal_moves(self)) >= 1:
+            moves = piece.get_legal_moves(self)
+            if moves:
+                print(type(piece).__name__, piece.get_coordinates(), moves)
                 return True
         return False
     
@@ -181,6 +183,7 @@ class Board:
         if self.check_player_has_any_legal_moves(color=color):
             return False
         
+        print(f"Checkmate - {color} wins!")
         return True
     
     def is_stalemate(self, color: str) -> bool:

@@ -1,27 +1,30 @@
-import math
 import tkinter as tk
-from src.utils.symbols import symbols
+from math import ceil
 
+from src.utils.symbols import symbols
+from src.board import Board
+from src.piece import Piece
 
 root = tk.Tk()
 
 
 class Ui(tk.Canvas):
-    def __init__(self, parent, board, **kwargs):
+    def __init__(self, parent, board: Board, **kwargs):
         super().__init__(parent, **kwargs)
         self.board = board
-        self.square_size = min(self.winfo_reqwidth(), self.winfo_reqheight())
+        self.square_size = min(.9*self.winfo_reqwidth(), .9*self.winfo_reqheight())
         self.bind("<Configure>", self.on_resize)
         self.bind("<Button-1>", self._click)
         self.selected_piece = None
         self.selected_coordinates = None
         self.legal_moves = []
+        self.pixels_per_move = 10
         
     def _chess_to_canvas(self, coordinates: tuple) -> tuple:
         chess_x, chess_y = coordinates
 
         canvas_col = chess_y - 1
-        canvas_row = 8 - chess_x
+        canvas_row = 8 - chess_x 
 
         return (canvas_row, canvas_col)
 
@@ -48,20 +51,71 @@ class Ui(tk.Canvas):
             self.selected_piece = piece
             self.selected_coordinates = click_coordinates
             return
+        
+        if not self.board.would_move_be_legal(piece=self.selected_piece, new_coordinates=click_coordinates):
+            return
 
-        self.board.move_piece(self.selected_piece, click_coordinates)
+        if self.board.move_piece(self.selected_piece, click_coordinates):
+            self.after(
+                5,
+                self._animate_move,
+                self.selected_piece,
+                self.selected_coordinates,
+                click_coordinates,
+                0
+            )
+            self.selected_piece = None
+            self.selected_coordinates = None
+            
+            if self.board.is_checkmate(self.board.turn):
+                print(f"{self.board.turn} is checkmated")
+            elif self.board.is_stalemate(self.board.turn):
+                print("Stalemate")
+            elif self.board.verify_king_in_check(self.board.turn):
+                print(f"{self.board.turn} is in check")
 
-        self.selected_piece = None
-        self.selected_coordinates = None
+    def _get_font(self) -> str:
+        return f"Times {round(self.square_size / 1.5)}"
 
+    def _animate_move(self, piece, start_coordinates, end_coordinates, current_frame=0) -> None:
+        start_canvas_coordinates = self._chess_to_canvas(start_coordinates)
+        end_canvas_coordiantes = self._chess_to_canvas(end_coordinates)
+        start_location_pixel_x = start_canvas_coordinates[1] * self.square_size + self.square_size / 2
+        start_location_pixel_y = start_canvas_coordinates[0] * self.square_size + self.square_size / 2
+        target_location_pixel_x = end_canvas_coordiantes[1] * self.square_size + self.square_size / 2
+        target_location_pixel_y = end_canvas_coordiantes[0] * self.square_size + self.square_size / 2
+        dx = target_location_pixel_x - start_location_pixel_x
+        dy = target_location_pixel_y - start_location_pixel_y
+        frames = int(ceil(max(abs(dx), abs(dy)) / self.pixels_per_move))
+        progress = current_frame / frames
+        x = start_location_pixel_x + (target_location_pixel_x - start_location_pixel_x) * progress
+        y = start_location_pixel_y + (target_location_pixel_y - start_location_pixel_y) * progress
         self.delete("all")
         self._draw_board()
-        self._draw_pieces()
+        self._draw_pieces(skip_piece=piece)
+        self.create_text(x, y, text=symbols[type(piece)][piece.color], font=self._get_font(), fill=piece.color)
+        if current_frame < frames:
+            self.after(
+                7,
+                self._animate_move,
+                piece,
+                start_coordinates,
+                end_coordinates,
+                current_frame + 1,
+            )
+        else:
+            self.delete("all")
+            self._draw_board()
+            self._draw_pieces(skip_piece=None)
 
     def _get_row_column_from_click_coordinates(self, x: int, y: int) -> tuple:
         return self._canvas_to_chess(x, y)
 
+    def _get_x_y_from_chess_coordinates(self, coordinates: tuple) -> tuple:
+        return  self._chess_to_canvas(coordinates)
+
     def _draw_board(self) -> None:
+        # self.create_rectangle(0, 0, self.winfo_reqwidth(), self.square_size, fill="lightblue")
         for row in range(8):
             for col in range(8):
                 x0 = col * self.square_size
@@ -71,10 +125,10 @@ class Ui(tk.Canvas):
                 color = "grey" if (row + col) % 2 == 0 else "darkgrey"
                 self.create_rectangle(x0, y0, x1, y1, fill=color)
 
-    def _draw_pieces(self) -> None:
-        font = f"Times {round(self.square_size / 1.5)}"
-
+    def _draw_pieces(self, skip_piece: Piece) -> None:
         for coordinates, piece in self.board.pieces.items():
+            if skip_piece and skip_piece.get_coordinates() == coordinates:
+                continue
             canvas_row, canvas_col = self._chess_to_canvas(coordinates)
 
             text = symbols[type(piece)][piece.color]
@@ -82,7 +136,7 @@ class Ui(tk.Canvas):
             x = canvas_col * self.square_size + self.square_size / 2
             y = canvas_row * self.square_size + self.square_size / 2
 
-            self.create_text(x, y, text=text, font=font, fill=piece.color)
+            self.create_text(x, y, text=text, font=self._get_font(), fill=piece.color)
 
     def on_resize(self, event) -> None:
         width = event.width
@@ -91,5 +145,5 @@ class Ui(tk.Canvas):
         self.square_size = board_size / 8
         self.delete("all")
         self._draw_board()
-        self._draw_pieces()
+        self._draw_pieces(skip_piece=None)
         
